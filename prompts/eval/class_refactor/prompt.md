@@ -1,5 +1,5 @@
-Could you please refactor the `NestedStruct` from the `FakeSimpleClass`?
-I'd like it to be its own class called `NestedClass`.
+Could you please refactor the `NestedStruct` from the `FakeSimpleClass`? I'd
+like it to be its own class called `NestedClass`.
 
 Please create new files `base/strings/nested_struct.h` and
 `base/strings/nested_struct.cc` for the new `NestedClass`.

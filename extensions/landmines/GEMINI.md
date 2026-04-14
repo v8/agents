@@ -1,7 +1,7 @@
 Any time you want to use `find`, use `fdfind` instead.
 
-If running `fdfind` fails because the executable is missing, tell the
-user to install it with the following command, and then stop.
+If running `fdfind` fails because the executable is missing, tell the user to
+install it with the following command, and then stop.
 
 ```
 sudo apt-get install fd-find

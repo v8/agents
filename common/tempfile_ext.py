@@ -14,7 +14,7 @@ from typing import Generator
 def mkstemp_closed(suffix=None,
                    prefix=None,
                    directory=None) -> Generator[pathlib.Path, None, None]:
-    """Yields a filepath to a closed temporary file on disk.
+  """Yields a filepath to a closed temporary file on disk.
 
     When the context manager goes out of scope, the temporary file is removed.
 
@@ -33,11 +33,10 @@ def mkstemp_closed(suffix=None,
     Args:
         See tempfile.mkstemp().
     """
-    file_handle, file_path = tempfile.mkstemp(suffix=suffix,
-                                              prefix=prefix,
-                                              dir=directory)
-    try:
-        os.close(file_handle)
-        yield pathlib.Path(file_path)
-    finally:
-        os.remove(file_path)
+  file_handle, file_path = tempfile.mkstemp(
+      suffix=suffix, prefix=prefix, dir=directory)
+  try:
+    os.close(file_handle)
+    yield pathlib.Path(file_path)
+  finally:
+    os.remove(file_path)

@@ -18,8 +18,8 @@ complete a task. Everything is intended to work with gemini-cli.
 
 Googler-only docs: http://go/chrome-coding-with-ai-agents
 
-Create a local, untracked file `//GEMINI.md`. Include the relevant
-prompts using @, for example, a typical desktop developer will use:
+Create a local, untracked file `//GEMINI.md`. Include the relevant prompts using
+@, for example, a typical desktop developer will use:
 
 ```src/GEMINI.md
 @agents/prompts/common.md
@@ -40,8 +40,8 @@ An iOS developer would use:
 @agents/prompts/templates/ios.md
 ```
 
-You can confirm that prompts were successfully imported by running the `/memory
-show` command in gemini-cli.
+You can confirm that prompts were successfully imported by running the
+`/memory show` command in gemini-cli.
 
 ## Known problems
 

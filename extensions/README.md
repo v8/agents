@@ -6,9 +6,6 @@ directory corresponds to one extension.
 
 Configuration are provided in [gemini-cli extensions] format.
 
-[model context protocol]: https://modelcontextprotocol.io/
-[gemini-cli extensions]: https://github.com/google-gemini/gemini-cli/blob/main/docs/extensions/index.md
-
 ## Managing Configurations
 
 Use `agents/extensions/install.py` to manage extensions. This script is a
@@ -33,11 +30,15 @@ vpython3 agents/extensions/install.py list
 
 The output table includes the following columns:
 
-*   **EXTENSION**: The name of the extension.
-*   **AVAILABLE**: The version of the extension found in the Chromium source tree. A `-` indicates it's not available locally.
-*   **INSTALLED**: The version of the extension currently installed in your Gemini CLI user-level extensions directory. A `-` indicates it's not installed.
-*   **LINKED**: Indicates if the installed extension is a symbolic link (`yes`) to the source directory or a copy (`no`).
-*   **ENABLED**: Indicates if the extension is enabled for the current workspace (`workspace`) or not (`-`).
+- **EXTENSION**: The name of the extension.
+- **AVAILABLE**: The version of the extension found in the Chromium source tree.
+  A `-` indicates it's not available locally.
+- **INSTALLED**: The version of the extension currently installed in your Gemini
+  CLI user-level extensions directory. A `-` indicates it's not installed.
+- **LINKED**: Indicates if the installed extension is a symbolic link (`yes`) to
+  the source directory or a copy (`no`).
+- **ENABLED**: Indicates if the extension is enabled for the current workspace
+  (`workspace`) or not (`-`).
 
 ### Adding Extensions
 
@@ -89,9 +90,9 @@ There are three types of MCP server configurations supported:
 
 ## Creating an MCP server
 
-See the [example][3] server for a minimal example for creating an MCP tool
-with python and FastMCP
+See the [example][3] server for a minimal example for creating an MCP tool with
+python and FastMCP
 
-[1]: https://modelcontextprotocol.io/
-[2]: https://github.com/google-gemini/gemini-cli/blob/main/docs/extensions/index.md
 [3]: example_server/README.md
+[gemini-cli extensions]: https://github.com/google-gemini/gemini-cli/blob/main/docs/extensions/index.md
+[model context protocol]: https://modelcontextprotocol.io/

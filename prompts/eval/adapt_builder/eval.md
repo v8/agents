@@ -1,30 +1,30 @@
-* Owners: jonathanjlee@google.com
-* Description: Define a LUCI builder in Starlark using an existing builder as a
+- Owners: jonathanjlee@google.com
+- Description: Define a LUCI builder in Starlark using an existing builder as a
   guide.
-* Git-Revision: 377f1db7a8a7b407dacffb2f56bce6474e913237
-* Result:
-  * CI and try builders added to `.star` files (see sample diffs below).
-  * `lucicfg generate main.star` ran successfully.
-* Modified files:
-  * `infra/config/generated/builder-owners/chrome-sanitizer-builder-owners@google.com.txt`
-  * `infra/config/generated/builders/ci/win-blink-asan-rel/gn-args.json`
-  * `infra/config/generated/builders/ci/win-blink-asan-rel/properties.json`
-  * `infra/config/generated/builders/ci/win-blink-asan-rel/shadow-properties.json`
-  * `infra/config/generated/builders/ci/win-blink-asan-rel/targets/chromium.memory.json`
-  * `infra/config/generated/builders/gn_args_locations.json`
-  * `infra/config/generated/builders/try/win-blink-asan-rel/gn-args.json`
-  * `infra/config/generated/builders/try/win-blink-asan-rel/properties.json`
-  * `infra/config/generated/builders/try/win-blink-asan-rel/targets/chromium.memory.json`
-  * `infra/config/generated/cq-usage/mega_cq_bots.txt`
-  * `infra/config/generated/health-specs/health-specs.json`
-  * `infra/config/generated/luci/commit-queue.cfg`
-  * `infra/config/generated/luci/cr-buildbucket.cfg`
-  * `infra/config/generated/luci/luci-milo.cfg`
-  * `infra/config/generated/luci/luci-notify.cfg`
-  * `infra/config/generated/luci/luci-scheduler.cfg`
-  * `infra/config/generated/sheriff-rotations/chromium.txt`
-  * `infra/config/subprojects/chromium/ci/chromium.memory.star`
-  * `infra/config/subprojects/chromium/try/tryserver.chromium.win.star`
+- Git-Revision: 377f1db7a8a7b407dacffb2f56bce6474e913237
+- Result:
+  - CI and try builders added to `.star` files (see sample diffs below).
+  - `lucicfg generate main.star` ran successfully.
+- Modified files:
+  - `infra/config/generated/builder-owners/chrome-sanitizer-builder-owners@google.com.txt`
+  - `infra/config/generated/builders/ci/win-blink-asan-rel/gn-args.json`
+  - `infra/config/generated/builders/ci/win-blink-asan-rel/properties.json`
+  - `infra/config/generated/builders/ci/win-blink-asan-rel/shadow-properties.json`
+  - `infra/config/generated/builders/ci/win-blink-asan-rel/targets/chromium.memory.json`
+  - `infra/config/generated/builders/gn_args_locations.json`
+  - `infra/config/generated/builders/try/win-blink-asan-rel/gn-args.json`
+  - `infra/config/generated/builders/try/win-blink-asan-rel/properties.json`
+  - `infra/config/generated/builders/try/win-blink-asan-rel/targets/chromium.memory.json`
+  - `infra/config/generated/cq-usage/mega_cq_bots.txt`
+  - `infra/config/generated/health-specs/health-specs.json`
+  - `infra/config/generated/luci/commit-queue.cfg`
+  - `infra/config/generated/luci/cr-buildbucket.cfg`
+  - `infra/config/generated/luci/luci-milo.cfg`
+  - `infra/config/generated/luci/luci-notify.cfg`
+  - `infra/config/generated/luci/luci-scheduler.cfg`
+  - `infra/config/generated/sheriff-rotations/chromium.txt`
+  - `infra/config/subprojects/chromium/ci/chromium.memory.star`
+  - `infra/config/subprojects/chromium/try/tryserver.chromium.win.star`
 
 CI builder diff:
 
