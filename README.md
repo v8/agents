@@ -1,46 +1,25 @@
-# Chromium Coding Agents
+# V8 Coding Agents
 
 This directory provides a centralized location for files related to AI coding
-agents (e.g. `gemini-cli`) used for development within the Chromium source tree.
+agents (e.g. `gemini-cli`) used for development within the V8 source tree.
 
 The goal is to provide a scalable and organized way to share prompts and tools
 among developers, accommodating the various environments (Linux, Mac, Windows)
 and agent types in use.
 
-Googler-only docs: http://go/chrome-coding-with-ai-agents
-
 ## Directory Structure
-
-### Prompts
-
-Shared `GEMINI.md` prompts. See [`//agents/prompts/README.md`].
 
 ### Extensions & MCP Servers
 
-Chrome-approved extensions & MCP servers. See [`//agents/extensions/README.md`].
-
-Use `agents/extensions/install.py` to list and configure available servers.
+V8-approved extensions & MCP servers. See [README.md](extensions/README.md).
 
 ### Skills
 
-On-demand expertise for specific tasks. See [`//agents/skills/README.md`].
-
-### Custom Commands
-
-Add these to [`//.gemini/commands`].
+On-demand expertise for specific tasks. See [README.md](skills/README.md).
 
 ## Contributing
 
-Please freely add self-contained task prompts and prompt templates that match
-the format of the existing examples.
+Please freely add self-contained task prompts and prompt templates.
 
 New MCP server configurations should be for owned and supported MCP servers and
 include OWNERS.
-
-Changes to `common.GEMINI.md` should be done carefully as it's meant to be used
-broadly.
-
-[`//.gemini/commands`]: /.gemini/commands/README.md
-[`//agents/extensions/readme.md`]: /agents/extensions/README.md
-[`//agents/prompts/readme.md`]: /agents/prompts/README.md
-[`//agents/skills/readme.md`]: /agents/skills/README.md

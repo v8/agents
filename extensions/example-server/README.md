@@ -4,14 +4,10 @@ This guide will walk you through adding MCP tools to an existing server or
 creating a new server. Tools should be reviewed by security which can make
 adding tools to an existing on a preferred option to make the review easier.
 
-If you want to add a non-chromium specific tool to the existing
-[depot_tools/mcp][5] server or a chromium specific tool to [chromium_tools][6],
-see "Adding tools to the server" below.
-
 ## Creating an MCP server
 
-This guide will walk you through implementing a [FastMCP][1] server with vpython
-in chromium. The example files are contained in this same folder for reference.
+This guide will walk you through implementing a [FastMCP][1] server with vpython.
+The example files are contained in this same folder for reference.
 
 ### Add the wheels to your vpython spec
 
@@ -75,10 +71,7 @@ custom args such as flags for which tools to include.
 
 ### gemini-extension.json
 
-If the server is being built for chromium and included in this folder, the
-[install.py][4] script can be used to manage installing the server. A
-gemini-extension.json file including similar information will make the server
-available to install:
+A `gemini-extension.json` file can be used to configure the server:
 
 ```
 {
@@ -87,7 +80,7 @@ available to install:
   "mcpServers": {
     "example_server": {
       "command": "vpython3",
-      "args": ["agents/mcp/example_server/server.py"]
+      "args": ["extensions/example-server/server.py"]
     }
   }
 }
@@ -109,7 +102,7 @@ gemini-cli. If the MCP runs and is installed correctly, the tool should be
 listed under a `/mcp` call or listed after ctrl+t. In the case the tool fails to
 load or communicate, ctrl+o will give some limited error information. Note that
 the command to start the server is relative to where gemini was started. The
-example assumes gemini was started from the chromium/src folder. Asking gemini
+example assumes gemini was started from the V8 root folder. Asking gemini
 to run the tool outside of yolo mode should cause gemini to request permission
 before calling the tool. e.g. Asking gemini "What's the secret message?" is in
 this example results in:
@@ -138,6 +131,3 @@ barebones MCP tool.
 [1]: https://gofastmcp.com/getting-started/welcome
 [2]: https://chromium.googlesource.com/infra/infra/+/HEAD/doc/users/vpython.md
 [3]: server.py
-[4]: ../install.py
-[5]: https://source.chromium.org/chromium/chromium/tools/depot_tools/+/main:mcp/
-[6]: ../chromium_tools

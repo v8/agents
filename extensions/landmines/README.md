@@ -13,8 +13,7 @@ sudo apt-get install fd-find
 
 ## Disabled Commands
 
-The following are disabled because they are too slow on chrome's large source
-tree:
+The following are disabled because they are too slow on V8's source tree:
 
 - `glob`
 
@@ -48,7 +47,7 @@ tree:
 - `read_many_files`
 
   - The agent tends to echo out file contents when using this tool, which hangs
-    the agent for large files (e.g. `tools/metrics/histograms/enums.xml`)
+    the agent for large files.
   - https://github.com/google-gemini/gemini-cli/issues/5604
 
 ## But I Want to Use a Disabled Command
