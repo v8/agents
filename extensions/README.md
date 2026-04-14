@@ -6,20 +6,6 @@ directory corresponds to one extension.
 
 Configuration are provided in [gemini-cli extensions] format.
 
-## Types of MCP Servers
-
-There are three types of MCP server configurations supported:
-
-1. **Local MCP Server (V8 tree):** The configuration for these servers
-   points to a local MCP server that is located elsewhere within the V8
-   source tree.
-
-2. **Local MCP Server (prebuilt):** These servers are prebuilt as CIPD packages
-   and located within the same subdirectory as their configuration files.
-
-3. **Remote MCP Server:** The configuration for these servers contains a
-   reference to a remote URL where the MCP server is hosted.
-
 ## Creating an MCP server
 
 See the [example][3] server for a minimal example for creating an MCP tool with

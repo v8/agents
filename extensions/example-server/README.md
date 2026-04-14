@@ -6,8 +6,8 @@ adding tools to an existing on a preferred option to make the review easier.
 
 ## Creating an MCP server
 
-This guide will walk you through implementing a [FastMCP][1] server with vpython.
-The example files are contained in this same folder for reference.
+This guide will walk you through implementing a [FastMCP][1] server with
+vpython. The example files are contained in this same folder for reference.
 
 ### Add the wheels to your vpython spec
 
@@ -102,10 +102,10 @@ gemini-cli. If the MCP runs and is installed correctly, the tool should be
 listed under a `/mcp` call or listed after ctrl+t. In the case the tool fails to
 load or communicate, ctrl+o will give some limited error information. Note that
 the command to start the server is relative to where gemini was started. The
-example assumes gemini was started from the V8 root folder. Asking gemini
-to run the tool outside of yolo mode should cause gemini to request permission
-before calling the tool. e.g. Asking gemini "What's the secret message?" is in
-this example results in:
+example assumes gemini was started from the V8 root folder. Asking gemini to run
+the tool outside of yolo mode should cause gemini to request permission before
+calling the tool. e.g. Asking gemini "What's the secret message?" is in this
+example results in:
 
 ```
  ╭─────────────────────────────────────────────────────────────────────────────────────────────╮

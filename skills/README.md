@@ -21,9 +21,9 @@ your request and ask for permission to activate it.
 
 ## Contributing
 
-New skills should be self-contained within their own directory under
-`skills/`. Each skill requires a `SKILL.md` file at its root with a name
-and description in the YAML frontmatter.
+New skills should be self-contained within their own directory under `skills/`.
+Each skill requires a `SKILL.md` file at its root with a name and description in
+the YAML frontmatter.
 
 Note that gemini-cli comes preloaded with a "skill creator" skill. Most skills
 can be written or improved by asking gemini to do so.
