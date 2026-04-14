@@ -14,6 +14,7 @@ sudo apt-get install fd-find
 ## Disabled Commands
 
 The following are disabled because they are too slow on V8's source tree:
+
 - `glob`
 - `find .`
 - `ls -R`
