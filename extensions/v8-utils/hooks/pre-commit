@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -e
+
+staged=$(git diff --cached --name-only --diff-filter=ACM | grep '\.py$' || true)
+[ -z "$staged" ] && exit 0
+
+uv run ruff format --check $staged 2>/dev/null && exit 0
+
+# Something would be reformatted — do it, then abort so the user can review
+uv run ruff format $staged
+echo "ruff reformatted files — please stage the changes and re-commit"
+exit 1
