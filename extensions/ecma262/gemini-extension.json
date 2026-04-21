@@ -1,0 +1,10 @@
+{
+  "name": "ecma262",
+  "version": "1.0.0",
+  "mcpServers": {
+    "ecma262": {
+      "command": "vpython3",
+      "args": ["extensions/ecma262/server.py"]
+    }
+  }
+}
