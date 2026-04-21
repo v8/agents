@@ -1,0 +1,10 @@
+{
+  "name": "ecma262_state_machine",
+  "version": "1.0.0",
+  "mcpServers": {
+    "ecma262_state_machine": {
+      "command": "vpython3",
+      "args": ["extensions/ecma262_state_machine/server.py"]
+    }
+  }
+}
