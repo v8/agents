@@ -22,12 +22,9 @@ ln -s $(pwd)/third_party/agents .agents/plugins/v8-agents
 
 ### 2. Installing MCP Servers
 
-This plugin uses several MCP servers defined in `mcp_config.json`.
+To install the MCP servers, you need to manually add them to your global configuration file at `~/.gemini/jetski/mcp_config.json`.
 
-**v8-utils (v8-mcp)**
-See extensions/v8-utils/README.md.
-
-The rest use `vpython3` and are located inside the `extensions/` directory. They will run directly from the repository.
+Please refer to the `mcp_config.json` file in the root of this plugin directory for the server definitions to copy. You will need to replace `${extensionPath}` with the actual **absolute** path to this plugin directory when copying to the global configuration.
 
 ## Directory Structure
 

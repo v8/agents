@@ -3,19 +3,19 @@
     "ecma262": {
       "command": "vpython3",
       "args": [
-        "third_party/agents/extensions/ecma262/server.py"
+        "${extensionPath}/extensions/ecma262/server.py"
       ]
     },
     "ecma262_state_machine": {
       "command": "vpython3",
       "args": [
-        "third_party/agents/extensions/ecma262_state_machine/server.py"
+        "${extensionPath}/extensions/ecma262_state_machine/server.py"
       ]
     },
     "v8-utils": {
       "command": "bash",
       "args": [
-        "third_party/agents/extensions/v8-utils/run-v8-mcp.sh"
+        "${extensionPath}/extensions/v8-utils/run-v8-mcp.sh"
       ]
     }
   }
