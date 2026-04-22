@@ -3,19 +3,19 @@
     "ecma262": {
       "command": "vpython3",
       "args": [
-        "~/.gemini/jetski/plugins/v8-agents/extensions/ecma262/server.py"
+        "third_party/agents/extensions/ecma262/server.py"
       ]
     },
     "ecma262_state_machine": {
       "command": "vpython3",
       "args": [
-        "~/.gemini/jetski/plugins/v8-agents/extensions/ecma262_state_machine/server.py"
+        "third_party/agents/extensions/ecma262_state_machine/server.py"
       ]
     },
     "v8-utils": {
       "command": "bash",
       "args": [
-        "~/.gemini/jetski/plugins/v8-agents/extensions/v8-utils/run-v8-mcp.sh"
+        "third_party/agents/extensions/v8-utils/run-v8-mcp.sh"
       ]
     }
   }

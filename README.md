@@ -15,8 +15,9 @@ This repository functions as a plugin. It provides Skills, Rules, and MCP Server
 
 To install this plugin symlink it into your plugins directory:
 ```bash
-mkdir -p ~/.gemini/jetski/plugins
-ln -s $(pwd) ~/.gemini/jetski/plugins/v8-agents
+git clone https://github.com/v8/agents.git third_party/agents
+mkdir -p .agents/plugins
+ln -s $(pwd)/third_party/agents .agents/plugins/v8-agents
 ```
 
 ### 2. Installing MCP Servers
