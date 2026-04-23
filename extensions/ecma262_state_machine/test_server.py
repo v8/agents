@@ -16,24 +16,24 @@ server.STATE_FILE = os.path.join(
 class TestEcmabot(unittest.TestCase):
 
   def test_state_init(self):
-    result_json = server.ecma262_state_machine_init()
+    result_json = server.init()
     result = json.loads(result_json)
     self.assertEqual(result.get("status"), "initialized")
 
   def test_current_state_tracking(self):
     # Init without arguments, should generate a unique file
-    init_res = server.ecma262_state_machine_init()
+    init_res = server.init()
     result = json.loads(init_res)
     state_file = result.get("state_file")
     self.assertIsNotNone(state_file)
     self.assertTrue("state_" in state_file)
 
     # Call another operation without state_id
-    server.ecma262_state_machine_push_context("test_current", "ref:Realm:1",
+    server.push_context("test_current", "ref:Realm:1",
                                               "ref:Env:1", "ref:Env:1")
 
     # Verify it wrote to the generated file by reading history
-    history = server.ecma262_state_machine_get_history("full")
+    history = server.get_history("full")
     self.assertIn("test_current", history)
 
     # Clean up
@@ -43,155 +43,155 @@ class TestEcmabot(unittest.TestCase):
       os.remove(state_file)
 
   def test_state_push_context(self):
-    server.ecma262_state_machine_init()
-    result = server.ecma262_state_machine_push_context("test_context",
+    server.init()
+    result = server.push_context("test_context",
                                                        "ref:Realm:1",
                                                        "ref:Env:Test",
                                                        "ref:Env:Test")
     self.assertEqual(result, "Pushed context: test_context")
 
   def test_state_pop_context(self):
-    server.ecma262_state_machine_init()
-    server.ecma262_state_machine_push_context("test_context", "ref:Realm:1",
+    server.init()
+    server.push_context("test_context", "ref:Realm:1",
                                               "ref:Env:Test", "ref:Env:Test")
-    result = server.ecma262_state_machine_pop_context()
+    result = server.pop_context()
     self.assertEqual(result, "Popped context: test_context")
 
   def test_state_update_context(self):
-    server.ecma262_state_machine_init()
-    server.ecma262_state_machine_push_context("test_context", "ref:Realm:1",
+    server.init()
+    server.push_context("test_context", "ref:Realm:1",
                                               "ref:Env:Test", "ref:Env:Test")
 
     # Test valid update
-    result = server.ecma262_state_machine_update_context(
+    result = server.update_context(
         "codeEvaluationState", "Suspended")
     self.assertTrue("Updated top context field" in result)
 
     # Test invalid key
-    result = server.ecma262_state_machine_update_context("invalid_key", "value")
+    result = server.update_context("invalid_key", "value")
     self.assertTrue("Error: Invalid execution context key" in result)
 
   def test_state_create_env(self):
-    server.ecma262_state_machine_init()
-    result = server.ecma262_state_machine_new_environment(
+    server.init()
+    result = server.new_environment(
         "Declarative", "ref:Env:Global")
     self.assertEqual(result,
                      "Created environment ref:Env:4 of type Declarative")
 
   def test_state_set_binding(self):
-    server.ecma262_state_machine_init()
-    server.ecma262_state_machine_new_environment("Declarative",
+    server.init()
+    server.new_environment("Declarative",
                                                  "ref:Env:Global")
-    result = server.ecma262_state_machine_set_binding("ref:Env:4", "x", 42)
+    result = server.set_binding("ref:Env:4", "x", 42)
     self.assertEqual(result, "Set binding x = 42 in ref:Env:4")
 
   def test_state_env_op(self):
-    server.ecma262_state_machine_init()
-    server.ecma262_state_machine_new_environment("Declarative",
+    server.init()
+    server.new_environment("Declarative",
                                                  "ref:Env:Global")
 
     # Test CreateMutableBinding
-    result = server.ecma262_state_machine_env_op("ref:Env:4",
+    result = server.env_op("ref:Env:4",
                                                  "CreateMutableBinding", "x")
     self.assertEqual(result, "Created mutable binding x in ref:Env:4")
 
     # Test InitializeBinding
-    result = server.ecma262_state_machine_env_op("ref:Env:4",
+    result = server.env_op("ref:Env:4",
                                                  "InitializeBinding", "x", 42)
     self.assertEqual(result, "Initialized binding x to 42 in ref:Env:4")
 
     # Test GetBindingValue
-    result = server.ecma262_state_machine_env_op("ref:Env:4", "GetBindingValue",
+    result = server.env_op("ref:Env:4", "GetBindingValue",
                                                  "x")
     self.assertEqual(json.loads(result), 42)
 
   def test_state_has_binding_declarative(self):
-    server.ecma262_state_machine_init()
-    server.ecma262_state_machine_new_environment("Declarative",
+    server.init()
+    server.new_environment("Declarative",
                                                  "ref:Env:Global")
 
-    result = server.ecma262_state_machine_env_op("ref:Env:4", "HasBinding", "x")
+    result = server.env_op("ref:Env:4", "HasBinding", "x")
     self.assertFalse(result)
 
-    server.ecma262_state_machine_env_op("ref:Env:4", "CreateMutableBinding",
+    server.env_op("ref:Env:4", "CreateMutableBinding",
                                         "x")
 
-    result = server.ecma262_state_machine_env_op("ref:Env:4", "HasBinding", "x")
+    result = server.env_op("ref:Env:4", "HasBinding", "x")
     self.assertTrue(result)
 
   def test_state_has_binding_object(self):
-    server.ecma262_state_machine_init()
+    server.init()
 
-    result = server.ecma262_state_machine_env_op("ref:Env:GlobalObj",
+    result = server.env_op("ref:Env:GlobalObj",
                                                  "HasBinding", "globalProp")
     self.assertFalse(result)
 
-    server.ecma262_state_machine_object_op("ref:Obj:Global",
+    server.object_op("ref:Obj:Global",
                                            "OrdinaryDefineOwnProperty",
                                            "globalProp", 100)
 
-    result = server.ecma262_state_machine_env_op("ref:Env:GlobalObj",
+    result = server.env_op("ref:Env:GlobalObj",
                                                  "HasBinding", "globalProp")
     self.assertTrue(result)
 
   def test_state_has_binding_global(self):
-    server.ecma262_state_machine_init()
+    server.init()
 
-    result = server.ecma262_state_machine_env_op("ref:Env:Global", "HasBinding",
+    result = server.env_op("ref:Env:Global", "HasBinding",
                                                  "x")
     self.assertFalse(result)
 
-    server.ecma262_state_machine_env_op("ref:Env:GlobalDecl",
+    server.env_op("ref:Env:GlobalDecl",
                                         "CreateMutableBinding", "x")
 
-    result = server.ecma262_state_machine_env_op("ref:Env:Global", "HasBinding",
+    result = server.env_op("ref:Env:Global", "HasBinding",
                                                  "x")
     self.assertTrue(result)
 
-    result = server.ecma262_state_machine_env_op("ref:Env:Global", "HasBinding",
+    result = server.env_op("ref:Env:Global", "HasBinding",
                                                  "globalProp")
     self.assertFalse(result)
 
-    server.ecma262_state_machine_object_op("ref:Obj:Global",
+    server.object_op("ref:Obj:Global",
                                            "OrdinaryDefineOwnProperty",
                                            "globalProp", 100)
 
-    result = server.ecma262_state_machine_env_op("ref:Env:Global", "HasBinding",
+    result = server.env_op("ref:Env:Global", "HasBinding",
                                                  "globalProp")
     self.assertTrue(result)
 
   def test_state_object_op(self):
-    server.ecma262_state_machine_init()
+    server.init()
 
     # Test MakeBasicObject
-    result = server.ecma262_state_machine_object_op(
+    result = server.object_op(
         None,
         "MakeBasicObject",
         descriptor={"internalSlots": ["[[CustomSlot]]"]})
     self.assertTrue("MakeBasicObject" in result)
 
     # Test SetInternalSlot (should succeed because [[CustomSlot]] was declared)
-    result = server.ecma262_state_machine_object_op("ref:Obj:2",
+    result = server.object_op("ref:Obj:2",
                                                     "SetInternalSlot",
                                                     "[[CustomSlot]]", 123)
     self.assertEqual(result,
                      "Set internal slot [[CustomSlot]] to 123 in ref:Obj:2")
 
     # Test SetInternalSlot (should fail because [[UndeclaredSlot]] was not declared)
-    result = server.ecma262_state_machine_object_op("ref:Obj:2",
+    result = server.object_op("ref:Obj:2",
                                                     "SetInternalSlot",
                                                     "[[UndeclaredSlot]]", 456)
     self.assertTrue(
         "Error: Internal slot [[UndeclaredSlot]] was not declared" in result)
 
     # Test OrdinaryDefineOwnProperty
-    server.ecma262_state_machine_object_op("ref:Obj:3", "MakeBasicObject")
-    result = server.ecma262_state_machine_object_op(
+    server.object_op("ref:Obj:3", "MakeBasicObject")
+    result = server.object_op(
         "ref:Obj:3", "OrdinaryDefineOwnProperty", "prop", 456)
     self.assertTrue(result)
 
     # Test OrdinaryDefineOwnProperty (reject non-configurable update)
-    server.ecma262_state_machine_object_op(
+    server.object_op(
         "ref:Obj:3",
         "OrdinaryDefineOwnProperty",
         "non_conf",
@@ -199,7 +199,7 @@ class TestEcmabot(unittest.TestCase):
             "value": 1,
             "configurable": False
         })
-    result = server.ecma262_state_machine_object_op(
+    result = server.object_op(
         "ref:Obj:3",
         "OrdinaryDefineOwnProperty",
         "non_conf",
@@ -207,105 +207,105 @@ class TestEcmabot(unittest.TestCase):
     self.assertFalse(result)
 
     # Test OrdinaryGetPrototypeOf (initially None)
-    result = server.ecma262_state_machine_object_op("ref:Obj:3",
+    result = server.object_op("ref:Obj:3",
                                                     "OrdinaryGetPrototypeOf")
     self.assertIsNone(result)
 
     # Test OrdinarySetPrototypeOf
-    server.ecma262_state_machine_object_op("ref:ProtoObj", "MakeBasicObject")
-    result = server.ecma262_state_machine_object_op(
+    server.object_op("ref:ProtoObj", "MakeBasicObject")
+    result = server.object_op(
         "ref:Obj:3", "OrdinarySetPrototypeOf", value="ref:ProtoObj")
     self.assertTrue(result)
 
     # Test OrdinaryGetPrototypeOf (now should be ref:ProtoObj)
-    result = server.ecma262_state_machine_object_op("ref:Obj:3",
+    result = server.object_op("ref:Obj:3",
                                                     "OrdinaryGetPrototypeOf")
     self.assertEqual(result, "ref:ProtoObj")
 
     # Test OrdinaryIsExtensible
-    result = server.ecma262_state_machine_object_op("ref:Obj:3",
+    result = server.object_op("ref:Obj:3",
                                                     "OrdinaryIsExtensible")
     self.assertTrue(result)
 
     # Test OrdinaryPreventExtensions
-    result = server.ecma262_state_machine_object_op(
+    result = server.object_op(
         "ref:Obj:3", "OrdinaryPreventExtensions")
     self.assertTrue(result)
 
     # Test OrdinaryIsExtensible (now False)
-    result = server.ecma262_state_machine_object_op("ref:Obj:3",
+    result = server.object_op("ref:Obj:3",
                                                     "OrdinaryIsExtensible")
     self.assertFalse(result)
 
     # Test OrdinaryGetOwnProperty
-    result = server.ecma262_state_machine_object_op("ref:Obj:3",
+    result = server.object_op("ref:Obj:3",
                                                     "OrdinaryGetOwnProperty",
                                                     "prop")
     desc = json.loads(result)
     self.assertEqual(desc["value"], 456)
 
     # Test OrdinaryHasProperty
-    result = server.ecma262_state_machine_object_op("ref:Obj:3",
+    result = server.object_op("ref:Obj:3",
                                                     "OrdinaryHasProperty",
                                                     "prop")
     self.assertTrue(result)
 
     # Test OrdinaryDelete
-    result = server.ecma262_state_machine_object_op("ref:Obj:3",
+    result = server.object_op("ref:Obj:3",
                                                     "OrdinaryDelete", "prop")
     self.assertTrue(result)
 
     # Test OrdinaryHasProperty (now False)
-    result = server.ecma262_state_machine_object_op("ref:Obj:3",
+    result = server.object_op("ref:Obj:3",
                                                     "OrdinaryHasProperty",
                                                     "prop")
     self.assertFalse(result)
 
     # Test OrdinaryOwnPropertyKeys
-    result = server.ecma262_state_machine_object_op("ref:Obj:3",
+    result = server.object_op("ref:Obj:3",
                                                     "OrdinaryOwnPropertyKeys")
     keys = json.loads(result)
     self.assertIn("non_conf", keys)
 
     # Test OrdinaryGet (data property)
-    result = server.ecma262_state_machine_object_op("ref:Obj:3", "OrdinaryGet",
+    result = server.object_op("ref:Obj:3", "OrdinaryGet",
                                                     "non_conf")
     res = json.loads(result)
     self.assertEqual(res["status"], "completed")
     self.assertEqual(res["value"], 1)
 
     # Test OrdinarySet (data property) on a new extensible object
-    server.ecma262_state_machine_object_op("ref:Obj:5", "MakeBasicObject")
-    result = server.ecma262_state_machine_object_op("ref:Obj:5", "OrdinarySet",
+    server.object_op("ref:Obj:5", "MakeBasicObject")
+    result = server.object_op("ref:Obj:5", "OrdinarySet",
                                                     "new_prop", 789)
     res = json.loads(result)
     self.assertEqual(res["status"], "completed")
     self.assertTrue(res["success"])
 
     # Test OrdinaryGet (verify new_prop)
-    result = server.ecma262_state_machine_object_op("ref:Obj:5", "OrdinaryGet",
+    result = server.object_op("ref:Obj:5", "OrdinaryGet",
                                                     "new_prop")
     res = json.loads(result)
     self.assertEqual(res["status"], "completed")
     self.assertEqual(res["value"], 789)
 
     # Test OrdinaryDefineOwnProperty with getter on a NEW object
-    server.ecma262_state_machine_object_op("ref:Obj:4", "MakeBasicObject")
-    server.ecma262_state_machine_object_op(
+    server.object_op("ref:Obj:4", "MakeBasicObject")
+    server.object_op(
         "ref:Obj:4",
         "OrdinaryDefineOwnProperty",
         "getter_prop",
         descriptor={"get": "ref:GetterFunc"})
 
     # Test OrdinaryGet (should return signal)
-    result = server.ecma262_state_machine_object_op("ref:Obj:4", "OrdinaryGet",
+    result = server.object_op("ref:Obj:4", "OrdinaryGet",
                                                     "getter_prop")
     res = json.loads(result)
     self.assertEqual(res["status"], "requires_getter_invocation")
     self.assertEqual(res["getter"], "ref:GetterFunc")
 
     # Test OrdinaryCall
-    result = server.ecma262_state_machine_object_op(
+    result = server.object_op(
         "ref:Obj:3",
         "OrdinaryCall",
         value="ref:ThisVal",
@@ -318,7 +318,7 @@ class TestEcmabot(unittest.TestCase):
     self.assertEqual(res["argumentsList"], [1, 2])
 
     # Test OrdinaryConstruct
-    result = server.ecma262_state_machine_object_op(
+    result = server.object_op(
         "ref:Obj:2",
         "OrdinaryConstruct",
         descriptor={
@@ -333,7 +333,7 @@ class TestEcmabot(unittest.TestCase):
     self.assertEqual(res["argumentsList"], [3, 4])
 
     # Test OrdinaryObjectCreate
-    result = server.ecma262_state_machine_object_op(
+    result = server.object_op(
         None, "OrdinaryObjectCreate", value="ref:Obj:2")
     self.assertTrue("OrdinaryObjectCreate" in result)
 

@@ -1979,8 +1979,8 @@ def _set_current_state(state_id):
 
 # Tool definitions
 # ... (keep existing tools)
-@mcp.tool(name='ecma262_state_machine_init')
-def ecma262_state_machine_init() -> str:
+@mcp.tool(name='init')
+def init() -> str:
   """Initializes the abstract machine state.
     
     Returns the full path to the created state file.
@@ -1997,8 +1997,8 @@ def ecma262_state_machine_init() -> str:
   })
 
 
-@mcp.tool(name='ecma262_state_machine_push_context')
-def ecma262_state_machine_push_context(name: str,
+@mcp.tool(name='push_context')
+def push_context(name: str,
                                        realm: str,
                                        lexEnv: str,
                                        varEnv: str,
@@ -2008,15 +2008,15 @@ def ecma262_state_machine_push_context(name: str,
   return sm.ecma262_state_push_context(name, realm, lexEnv, varEnv)
 
 
-@mcp.tool(name='ecma262_state_machine_pop_context')
-def ecma262_state_machine_pop_context(state_id: str = None) -> str:
+@mcp.tool(name='pop_context')
+def pop_context(state_id: str = None) -> str:
   """Pops the top execution context from the stack."""
   sm = StateManager(_get_state_path(state_id))
   return sm.ecma262_state_pop_context()
 
 
-@mcp.tool(name='ecma262_state_machine_update_context')
-def ecma262_state_machine_update_context(key: str,
+@mcp.tool(name='update_context')
+def update_context(key: str,
                                          value: Any,
                                          state_id: str = None) -> str:
   """Updates a field in the running execution context."""
@@ -2024,8 +2024,8 @@ def ecma262_state_machine_update_context(key: str,
   return sm.ecma262_state_update_context(key, value)
 
 
-@mcp.tool(name='ecma262_state_machine_new_environment')
-def ecma262_state_machine_new_environment(type: str,
+@mcp.tool(name='new_environment')
+def new_environment(type: str,
                                           outerEnv: str,
                                           bindings: dict = None,
                                           state_id: str = None) -> str:
@@ -2034,8 +2034,8 @@ def ecma262_state_machine_new_environment(type: str,
   return sm.ecma262_state_new_environment(type, outerEnv, bindings)
 
 
-@mcp.tool(name='ecma262_state_machine_set_binding')
-def ecma262_state_machine_set_binding(envId: str,
+@mcp.tool(name='set_binding')
+def set_binding(envId: str,
                                       name: str,
                                       value: Any,
                                       state_id: str = None) -> str:
@@ -2044,8 +2044,8 @@ def ecma262_state_machine_set_binding(envId: str,
   return sm.ecma262_state_set_binding(envId, name, value)
 
 
-@mcp.tool(name='ecma262_state_machine_env_op')
-def ecma262_state_machine_env_op(env_id: str,
+@mcp.tool(name='env_op')
+def env_op(env_id: str,
                                  operation: str,
                                  name: str,
                                  value: Any = None,
@@ -2063,8 +2063,8 @@ def ecma262_state_machine_env_op(env_id: str,
       binding_name=binding_name)
 
 
-@mcp.tool(name='ecma262_state_machine_object_op')
-def ecma262_state_machine_object_op(object_id: str,
+@mcp.tool(name='object_op')
+def object_op(object_id: str,
                                     operation: str,
                                     property_name: str = None,
                                     value: Any = None,
@@ -2076,8 +2076,8 @@ def ecma262_state_machine_object_op(object_id: str,
                               descriptor)
 
 
-@mcp.tool(name='ecma262_state_machine_enqueue_promise_job')
-def ecma262_state_machine_enqueue_promise_job(job_name: str,
+@mcp.tool(name='enqueue_promise_job')
+def enqueue_promise_job(job_name: str,
                                               callback_id: str,
                                               args: list,
                                               state_id: str = None) -> str:
@@ -2086,22 +2086,22 @@ def ecma262_state_machine_enqueue_promise_job(job_name: str,
   return sm.ecma262_state_enqueue_promise_job(job_name, callback_id, args)
 
 
-@mcp.tool(name='ecma262_state_machine_get_job_queue')
-def ecma262_state_machine_get_job_queue(state_id: str = None) -> str:
+@mcp.tool(name='get_job_queue')
+def get_job_queue(state_id: str = None) -> str:
   """Returns the current list of pending jobs."""
   sm = StateManager(_get_state_path(state_id))
   return json.dumps(sm.ecma262_state_get_job_queue())
 
 
-@mcp.tool(name='ecma262_state_machine_dequeue_job')
-def ecma262_state_machine_dequeue_job(state_id: str = None) -> str:
+@mcp.tool(name='dequeue_job')
+def dequeue_job(state_id: str = None) -> str:
   """Removes and returns the first job from the queue."""
   sm = StateManager(_get_state_path(state_id))
   return json.dumps(sm.ecma262_state_dequeue_job())
 
 
-@mcp.tool(name='ecma262_state_machine_get_history')
-def ecma262_state_machine_get_history(format_type: str = "full",
+@mcp.tool(name='get_history')
+def get_history(format_type: str = "full",
                                       state_id: str = None) -> str:
   """Returns the history of the state."""
   sm = StateManager(_get_state_path(state_id))
