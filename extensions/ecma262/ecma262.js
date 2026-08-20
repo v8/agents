@@ -75,6 +75,30 @@ function decimalToRoman(num) {
 }
 
 function processAlgorithm(alg) {
+  const ols = alg.querySelectorAll(':scope > ol');
+  if (ols.length > 0) {
+    const processedSteps = [];
+    function walkOl(ol, prefix, level) {
+      const lis = Array.from(ol.children).filter(c => c.tagName.toLowerCase() === 'li');
+      lis.forEach((li, idx) => {
+        const posPart = formatPart(idx, level);
+        const fullPos = prefix ? `${prefix}.${posPart}` : posPart;
+        const nestedOl = Array.from(li.children).find(c => c.tagName.toLowerCase() === 'ol');
+        let contentNodes = Array.from(li.childNodes).filter(n => n.nodeName.toLowerCase() !== 'ol');
+        let renderedContent = contentNodes.map(renderNode).join('').trim().replace(/\s+/g, ' ');
+        processedSteps.push({
+          position: fullPos,
+          content: renderedContent,
+          indent: level * 2,
+          raw: renderedContent
+        });
+        if (nestedOl) walkOl(nestedOl, fullPos, level + 1);
+      });
+    }
+    walkOl(ols[0], '', 0);
+    return processedSteps.length > 0 ? processedSteps : null;
+  }
+
   const text = alg.textContent;
   const lines = text.split('\n').filter(line => line.trim() !== '');
 
@@ -228,6 +252,8 @@ function renderNode(node) {
       return renderChildren(node).trim() + '\n\n';
     case 'var':
       return '_' + renderChildren(node).trim() + '_';
+    case 'emu-const':
+      return '\\~' + renderChildren(node).trim() + '\\~';
     case 'emu-val': {
       let val = renderChildren(node).trim();
       if (val.startsWith('~') && val.endsWith('~')) {
@@ -343,23 +369,25 @@ function formatSignature(name, sig) {
   return `${name} ( ${params.join(', ')} )${ret}`;
 }
 
-function getSectionContent(id) {
+function getSectionContent(id, customSpecPath) {
   if (id && id.startsWith('#')) id = id.slice(1);
-  const html = fs.readFileSync(SPEC_PATH, 'utf-8');
+  const targetSpec = customSpecPath || SPEC_PATH;
+  const html = fs.readFileSync(targetSpec, 'utf-8');
   const dom = new JSDOM(html);
   const document = dom.window.document;
   const element = document.getElementById(id);
 
   if (!element) {
-    return {error: `Section with id ${id} not found`};
+    return {error: `Section with id ${id} not found in ${targetSpec}`};
   }
 
   const markdown = renderNode(element).trim();
   return {content: markdown};
 }
 
-function getSectionsContent(ids) {
-  const html = fs.readFileSync(SPEC_PATH, 'utf-8');
+function getSectionsContent(ids, customSpecPath) {
+  const targetSpec = customSpecPath || SPEC_PATH;
+  const html = fs.readFileSync(targetSpec, 'utf-8');
   const dom = new JSDOM(html);
   const document = dom.window.document;
 
@@ -368,7 +396,7 @@ function getSectionsContent(ids) {
     if (id && id.startsWith('#')) id = id.slice(1);
     const element = document.getElementById(id);
     if (!element) {
-      results[id] = {error: `Section with id ${id} not found`};
+      results[id] = {error: `Section with id ${id} not found in ${targetSpec}`};
     } else {
       results[id] = {content: renderNode(element).trim()};
     }
@@ -376,15 +404,16 @@ function getSectionsContent(ids) {
   return results;
 }
 
-function getAncestry(id) {
+function getAncestry(id, customSpecPath) {
   if (id && id.startsWith('#')) id = id.slice(1);
-  const html = fs.readFileSync(SPEC_PATH, 'utf-8');
+  const targetSpec = customSpecPath || SPEC_PATH;
+  const html = fs.readFileSync(targetSpec, 'utf-8');
   const dom = new JSDOM(html);
   const document = dom.window.document;
   const element = document.getElementById(id);
 
   if (!element) {
-    return {error: `Section with id ${id} not found`};
+    return {error: `Section with id ${id} not found in ${targetSpec}`};
   }
 
   const ancestry = [];
@@ -675,10 +704,28 @@ try {
     }
     console.log(JSON.stringify(cleanAST(ast)));
   } else if (action === 'preparse') {
+    const customSpec = request.specPath || SPEC_PATH;
+    const customOutput = request.outputPath || OUTPUT_PATH;
     const {ops, entries} = loadBiblioForPreparse();
-    const html = fs.readFileSync(SPEC_PATH, 'utf-8');
+    const html = fs.readFileSync(customSpec, 'utf-8');
     const dom = new JSDOM(html);
     const document = dom.window.document;
+
+    // Extract all defining clauses with [aoid] attribute in the document
+    const aoidElements = document.querySelectorAll('emu-clause[aoid], [type="abstract operation"][aoid], emu-annex[aoid], emu-intro[aoid]');
+    aoidElements.forEach(el => {
+      const aoid = el.getAttribute('aoid');
+      if (aoid) {
+        const titleEl = el.querySelector('h1');
+        ops[aoid] = {
+          type: 'op',
+          aoid: aoid,
+          id: el.id,
+          refId: el.id,
+          title: titleEl ? titleEl.textContent.trim() : aoid
+        };
+      }
+    });
 
     const xrefs = document.querySelectorAll('emu-xref');
     xrefs.forEach(xref => {
@@ -739,20 +786,20 @@ try {
     });
 
     const output = {ops, steps};
-    fs.writeFileSync(OUTPUT_PATH, JSON.stringify(output, null, 2));
-    console.log(`Saved output to ${OUTPUT_PATH}`);
+    fs.writeFileSync(customOutput, JSON.stringify(output, null, 2));
+    console.log(`Saved output to ${customOutput}`);
   } else if (action === 'searchSpec') {
     const biblio = loadBiblio();
     const results = searchSpec(biblio, request.query, request.type);
     console.log(JSON.stringify(results));
   } else if (action === 'getSectionContent') {
-    const result = getSectionContent(request.id);
+    const result = getSectionContent(request.id, request.specPath);
     console.log(JSON.stringify(result));
   } else if (action === 'getSectionsContent') {
-    const result = getSectionsContent(request.ids);
+    const result = getSectionsContent(request.ids, request.specPath);
     console.log(JSON.stringify(result));
   } else if (action === 'getAncestry') {
-    const result = getAncestry(request.id);
+    const result = getAncestry(request.id, request.specPath);
     console.log(JSON.stringify(result));
   } else if (action === 'getOperationSignature') {
     const biblio = loadBiblio();

@@ -10,6 +10,9 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 import server
 
 class TestEcma262Server(unittest.TestCase):
+    def tearDown(self):
+        server.ACTIVE_PROPOSAL = None
+
     def test_get_ast_simple(self):
         code = "const a = 1;"
         ast_json = server.ecma262_parse(code)
@@ -110,6 +113,50 @@ class TestEcma262Server(unittest.TestCase):
         
         unhandled = tags_in_doc - HANDLED_TAGS
         self.assertEqual(len(unhandled), 0, f"Found unhandled tags in spec.html: {unhandled}")
+
+    def test_sanitize_tc39_proposal_name(self):
+        # Valid names
+        self.assertEqual(server.sanitize_tc39_proposal_name("explicit-resource-management"), "explicit-resource-management")
+        self.assertEqual(server.sanitize_tc39_proposal_name("proposal-temporal"), "temporal")
+        self.assertEqual(server.sanitize_tc39_proposal_name("tc39/decorators"), "decorators")
+        self.assertEqual(server.sanitize_tc39_proposal_name("https://tc39.es/proposal-float16array/"), "float16array")
+        self.assertEqual(server.sanitize_tc39_proposal_name("https://github.com/tc39/proposal-shadowrealm"), "shadowrealm")
+
+        # Invalid / non-TC39 names (security check)
+        with self.assertRaises(ValueError):
+            server.sanitize_tc39_proposal_name("")
+        with self.assertRaises(ValueError):
+            server.sanitize_tc39_proposal_name("../../etc/passwd")
+        with self.assertRaises(ValueError):
+            server.sanitize_tc39_proposal_name("evil.com/payload")
+        with self.assertRaises(ValueError):
+            server.sanitize_tc39_proposal_name("other-org/some-prop")
+
+    def test_proposal_load_diff_and_query(self):
+        # Load explicit-resource-management proposal
+        load_res = server.load_proposal("explicit-resource-management")
+        self.assertIn("# Loaded TC39 Proposal: `explicit-resource-management`", load_res)
+        self.assertIn("Abstract Operations Indexed:", load_res)
+
+        # List proposals
+        list_res = server.list_proposals()
+        self.assertIn("explicit-resource-management", list_res)
+        self.assertIn("(ACTIVE)", list_res)
+
+        # Query proposal-specific operation (NewDisposeCapability)
+        op_res = server.get_operation_algorithm("NewDisposeCapability")
+        self.assertIn("NewDisposeCapability", op_res)
+        self.assertIn("**Context:** `explicit-resource-management`", op_res)
+
+        # Diff an operation modified by the proposal
+        diff_res = server.diff_operation("InitializeReferencedBinding")
+        self.assertIn("Diff Comparison: `InitializeReferencedBinding`", diff_res)
+        self.assertIn("Proposal Version", diff_res)
+        self.assertIn("Base ECMA-262 Version", diff_res)
+
+        # Switch back to base
+        use_res = server.use_proposal("base")
+        self.assertIn("# Active Context: Base ECMA-262", use_res)
 
 
 if __name__ == '__main__':
