@@ -171,6 +171,7 @@ function searchSpec(biblio, query, type) {
 }
 
 function getSectionContent(id) {
+  if (id && id.startsWith('#')) id = id.slice(1);
   const html = fs.readFileSync(SPEC_PATH, 'utf-8');
   const dom = new JSDOM(html);
   const document = dom.window.document;
@@ -189,7 +190,8 @@ function getSectionsContent(ids) {
   const document = dom.window.document;
 
   const results = {};
-  for (const id of ids) {
+  for (let id of ids) {
+    if (id && id.startsWith('#')) id = id.slice(1);
     const element = document.getElementById(id);
     if (!element) {
       results[id] = {error: `Section with id ${id} not found`};
@@ -201,6 +203,7 @@ function getSectionsContent(ids) {
 }
 
 function getAncestry(id) {
+  if (id && id.startsWith('#')) id = id.slice(1);
   const html = fs.readFileSync(SPEC_PATH, 'utf-8');
   const dom = new JSDOM(html);
   const document = dom.window.document;
@@ -228,7 +231,7 @@ function getAncestry(id) {
 function getOperationSignature(biblio, name) {
   const entries = biblio.entries;
   for (const entry of entries) {
-    if (entry.type === 'op' && entry.aoid === name) {
+    if (entry.type === 'op' && (entry.aoid === name || (entry.aoid && name && entry.aoid.toLowerCase() === name.toLowerCase()))) {
       return {signature: entry.signature};
     }
   }

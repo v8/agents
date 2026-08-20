@@ -85,5 +85,28 @@ class TestEcma262Server(unittest.TestCase):
         self.assertIsInstance(result, str)
         self.assertTrue("TypeError" in result)
 
+    def test_get_operation_algorithm_host_defined(self):
+        result = server.get_operation_algorithm("HostEnsureCanAddPrivateElement")
+        self.assertIsInstance(result, str)
+        self.assertTrue("HostEnsureCanAddPrivateElement" in result)
+        self.assertTrue("host-defined exotic object" in result)
+
+    def test_get_operation_callers(self):
+        result = server.get_operation_callers("PrivateFieldAdd")
+        self.assertIsInstance(result, str)
+        self.assertIn("sec-definefield", result)
+        self.assertIn("Perform ? PrivateFieldAdd", result)
+
+    def test_section_hash_handling(self):
+        # Section with leading hash
+        res1 = server.get_section_content("#sec-completion-ao")
+        self.assertIn("sec-completion-ao", res1)
+
+        # Signature lookup
+        res2 = server.get_operation_signature("ToObject")
+        self.assertIn("signature", res2)
+        self.assertIn("parameters", res2)
+
+
 if __name__ == '__main__':
     unittest.main()

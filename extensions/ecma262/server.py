@@ -251,9 +251,11 @@ def search_spec(query: str, type: str = None) -> str:
   """Searches the pre-computed biblio.json index for concepts in the specification.
     
     Arguments:
-      query: The search term.
-      type: Filter by type (e.g., 'clause', 'op', 'grammar').
+      query: The search term (e.g., 'Completion', 'IsExtensible').
+      type: Optional filter by type (e.g., 'clause', 'op', 'grammar', 'prose', 'abstract_op').
     """
+  if not query:
+    return "Error: Must provide search query"
   input_data = json.dumps({
       "action": "searchSpec",
       "query": query,
@@ -267,8 +269,12 @@ def get_section_content(id: str) -> str:
   """Fetches the full HTML content for a specific section ID from the rendered specification.
     
     Arguments:
-      id: The section ID (e.g., 'sec-completion-ao').
+      id: The section ID (e.g., 'sec-completion-ao', 'sec-hostensurecanaddprivateelement').
     """
+  if not id:
+    return "Error: Must provide section ID"
+  if id.startswith('#'):
+    id = id[1:]
   input_data = json.dumps({"action": "getSectionContent", "id": id})
   return _call_spec_tools(input_data, "Error getting section content")
 
@@ -280,7 +286,12 @@ def get_sections_content(ids: list[str]) -> str:
     Arguments:
       ids: A list of section IDs (e.g., ['sec-completion-ao', 'sec-tonumber']).
     """
-  input_data = json.dumps({"action": "getSectionsContent", "ids": ids})
+  if not ids:
+    return "Error: Must provide list of section IDs"
+  cleaned_ids = [
+      i[1:] if i.startswith('#') else i for i in ids if isinstance(i, str)
+  ]
+  input_data = json.dumps({"action": "getSectionsContent", "ids": cleaned_ids})
   result = _call_spec_tools(input_data, "Error getting sections content")
   if result.startswith("Error"):
     return result
@@ -292,8 +303,12 @@ def get_ancestry(id: str) -> str:
   """Resolves the ancestry (parent chain) of a given section ID, helping to understand its context in the specification hierarchy.
     
     Arguments:
-      id: The section ID.
+      id: The section ID (e.g., 'sec-completion-ao').
     """
+  if not id:
+    return "Error: Must provide section ID"
+  if id.startswith('#'):
+    id = id[1:]
   input_data = json.dumps({"action": "getAncestry", "id": id})
   return _call_spec_tools(input_data, "Error getting ancestry")
 
@@ -303,40 +318,106 @@ def get_operation_signature(name: str) -> str:
   """Fetches the signature of an abstract operation from biblio.json.
     
     Arguments:
-      name: The name of the abstract operation (e.g., 'Completion').
+      name: The name of the abstract operation (e.g., 'Completion', 'ToObject').
     """
-  input_data = json.dumps({"action": "getOperationSignature", "name": name})
+  if not name:
+    return "Error: Must provide operation name"
+  input_data = json.dumps({
+      "action": "getOperationSignature",
+      "name": name
+  })
   return _call_spec_tools(input_data, "Error getting operation signature")
 
 
 @mcp.tool(name='ecma262_get_operation')
 def get_operation_algorithm(name: str) -> str:
-  """Fetches the full HTML content for a specific abstract operation by name.
+  """Fetches the full algorithm steps or clause HTML content for a specific abstract operation by name.
     
     Arguments:
-      name: The name of the abstract operation (e.g., 'ToObject').
+      name: The name of the abstract operation (e.g., 'ToObject', 'HostEnsureCanAddPrivateElement').
     """
-  if name not in OPS:
-    return f"Operation {name} not found in ops"
+  if not name:
+    return "Error: Must provide operation name"
 
-  op = OPS[name]
-  ref_id = op.get('refId') or op.get('id')
+  target = name
+  if target not in OPS:
+    matched = None
+    for k in OPS:
+      if k.lower() == target.lower():
+        matched = k
+        break
+    if matched:
+      target = matched
+    else:
+      # If not in OPS, try as section ID directly
+      sec_result = get_section_content(id=target)
+      try:
+        sec_json = json.loads(sec_result)
+        if 'content' in sec_json:
+          return f"# Section: {target}\n" + sec_json['content']
+      except Exception:
+        pass
+      return f"Operation '{target}' not found in ops"
+
+  op_obj = OPS[target]
+  ref_id = op_obj.get('refId') or op_obj.get('id')
   if not ref_id:
-    return f"No ID found for operation {name}"
+    return f"No ID found for operation {target}"
 
-  if ref_id not in STEPS:
-    return f"No steps found for operation {name} (ID: {ref_id})"
+  if ref_id in STEPS:
+    steps = STEPS[ref_id]
+    lines = []
+    for step in steps:
+      indent = " " * step.get('indent', 0)
+      pos = step.get('position', '')
+      content = step.get('content', '')
+      lines.append(f"{indent}{pos}. {content}")
+    return f"# Section: {ref_id}\n" + "\n".join(lines)
 
-  steps = STEPS[ref_id]
+  # Fallback for host-defined operations, prose operations, or clauses without emu-alg
+  sec_result = get_section_content(id=ref_id)
+  try:
+    sec_json = json.loads(sec_result)
+    if 'content' in sec_json:
+      return f"# Section: {ref_id} (Host-defined or prose operation)\n" + sec_json['content']
+  except Exception:
+    pass
 
-  lines = []
-  for step in steps:
-    indent = " " * step.get('indent', 0)
-    pos = step.get('position', '')
-    content = step.get('content', '')
-    lines.append(f"{indent}{pos}. {content}")
+  return f"No steps or content found for operation {target} (ID: {ref_id})"
 
-  return f"# Section: {ref_id}\n" + "\n".join(lines)
+
+@mcp.tool(name='ecma262_callers')
+def get_operation_callers(name: str) -> str:
+  """Finds all algorithm steps across the specification that call or reference a given abstract operation.
+    
+    Arguments:
+      name: The name of the abstract operation (e.g., 'HostEnsureCanAddPrivateElement', 'PrivateFieldAdd', 'IsExtensible').
+    """
+  if not name:
+    return "Error: Must provide operation name"
+
+  pattern = re.compile(r'\b' + re.escape(name) + r'\b')
+  results = []
+
+  for sec_id, step_list in STEPS.items():
+    matching_steps = []
+    for step in step_list:
+      content = step.get('content', '')
+      if pattern.search(content):
+        pos = step.get('position', '')
+        matching_steps.append(f"{pos}: {content}")
+    if matching_steps:
+      title = sec_id
+      if sec_id in OPS and 'aoid' in OPS[sec_id]:
+        title = f"{OPS[sec_id]['aoid']} ({sec_id})"
+      elif sec_id in OPS and 'title' in OPS[sec_id]:
+        title = f"{OPS[sec_id]['title']} ({sec_id})"
+      results.append(f"## {title}\n" + "\n".join(f"  - {s}" for s in matching_steps))
+
+  if not results:
+    return f"No callers found for '{name}' in specification algorithms"
+
+  return f"# Callers of {name} ({len(results)} sections):\n\n" + "\n\n".join(results)
 
 
 @mcp.tool(name='ecma262_get_evaluation')
@@ -346,6 +427,9 @@ def get_evaluation_algorithm(production_name: str) -> str:
     Arguments:
       production_name: The name of the production (e.g., 'VariableStatement').
     """
+  if not production_name:
+    return "Error: Must provide production name"
+
   results = []
   for key, value in STEPS.items():
     if 'runtime-semantics-evaluation' in key and production_name in key:
@@ -369,6 +453,8 @@ def ecma262_parse(code: str) -> str:
     Arguments:
       code: The JavaScript code to parse.
     """
+  if not code:
+    return "Error: Must provide JavaScript code"
   input_data = json.dumps({"action": "parse", "code": code})
   return _call_spec_tools(input_data, "Error parsing JS")
 
