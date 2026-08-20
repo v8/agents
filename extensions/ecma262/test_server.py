@@ -77,6 +77,12 @@ class TestEcma262Server(unittest.TestCase):
         # Verify rendered as markdown list
         self.assertIn("- If _obj_ is not a host-defined exotic object", result)
 
+    def test_user_code_annotation(self):
+        result = server.get_operation_algorithm("Get")
+        self.assertIsInstance(result, str)
+        self.assertIn("⚡", result)
+        self.assertIn("_obj_.[[Get]]", result)
+
     def test_get_operation_callers(self):
         result = server.get_operation_callers("PrivateFieldAdd")
         self.assertIsInstance(result, str)

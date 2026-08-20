@@ -680,6 +680,8 @@ def get_operation_signature(name: str, proposal: str = None) -> str:
 def get_operation_algorithm(name: str, proposal: str = None) -> str:
   """Fetches the full algorithm steps or clause content for a specific abstract operation by name.
     
+    Steps that can invoke JavaScript user code (e.g. getters, setters, Proxy traps, Symbol.toPrimitive) are annotated with ⚡.
+    
     Arguments:
       name: The name of the abstract operation (e.g., 'ToObject', 'AddDisposableResource').
       proposal: Optional TC39 proposal context (e.g., 'explicit-resource-management'). Defaults to active context.

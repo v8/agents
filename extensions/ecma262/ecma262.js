@@ -99,7 +99,7 @@ function processAlgorithm(alg) {
     return processedSteps.length > 0 ? processedSteps : null;
   }
 
-  const text = alg.textContent;
+  const text = renderChildren(alg);
   const lines = text.split('\n').filter(line => line.trim() !== '');
 
   const steps = [];
@@ -312,6 +312,14 @@ function renderNode(node) {
     case 'table':
     case 'emu-table':
       return renderTable(node);
+    case 'emu-meta': {
+      const effects = node.getAttribute('effects');
+      const inner = renderChildren(node).trim();
+      if (effects === 'user-code') {
+        return inner + ' ⚡';
+      }
+      return inner;
+    }
     case 'emu-alg':
       return formatAlgorithmSteps(node);
     case 'style':
