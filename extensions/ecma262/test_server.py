@@ -33,56 +33,36 @@ class TestEcma262Server(unittest.TestCase):
         self.assertTrue(result.startswith("Error parsing JS:"), f"Expected error message, got: {result}")
 
     def test_search_spec(self):
-        results_json = server.search_spec("Completion")
-        try:
-            results = json.loads(results_json)
-        except json.JSONDecodeError:
-            self.fail(f"search_spec did not return valid JSON. Output was: {results_json}")
-            
-        self.assertTrue(len(results) > 0)
-        # Verify first result has expected fields
-        first = results[0]
-        self.assertIn('id', first)
-        self.assertIn('title', first)
-        self.assertIn('type', first)
+        result = server.search_spec("Completion")
+        self.assertIsInstance(result, str)
+        self.assertIn("# Search Results for \"Completion\"", result)
+        self.assertIn("sec-completion-record", result)
 
     def test_get_section_content(self):
-        result_json = server.get_section_content("sec-completion-ao")
-        try:
-            result = json.loads(result_json)
-        except json.JSONDecodeError:
-            self.fail(f"get_section_content did not return valid JSON. Output was: {result_json}")
-            
-        self.assertIn('content', result)
-        self.assertTrue(result['content'].startswith("<emu-clause id=\"sec-completion-ao\""))
+        result = server.get_section_content("sec-completion-ao")
+        self.assertIsInstance(result, str)
+        self.assertTrue(result.startswith("# Completion"))
+        self.assertIn("1. Assert: _completionRecord_ is a Completion Record.", result)
+        # Ensure raw HTML tags are NOT present
+        self.assertNotIn("<emu-clause", result)
+        self.assertNotIn("<emu-alg>", result)
 
     def test_get_ancestry(self):
-        result_json = server.get_ancestry("sec-completion-ao")
-        try:
-            result = json.loads(result_json)
-        except json.JSONDecodeError:
-            self.fail(f"get_ancestry did not return valid JSON. Output was: {result_json}")
-            
-        self.assertIn('ancestry', result)
-        self.assertTrue(len(result['ancestry']) > 0)
-        # Verify structure
-        first = result['ancestry'][0]
-        self.assertIn('id', first)
-        self.assertIn('title', first)
+        result = server.get_ancestry("sec-completion-ao")
+        self.assertIsInstance(result, str)
+        self.assertIn("# Ancestry for `sec-completion-ao`", result)
+        self.assertIn("sec-notational-conventions", result)
 
     def test_get_operation_signature(self):
-        result_json = server.get_operation_signature("Completion")
-        try:
-            result = json.loads(result_json)
-        except json.JSONDecodeError:
-            self.fail(f"get_operation_signature did not return valid JSON. Output was: {result_json}")
-            
-        self.assertIn('signature', result)
-        self.assertIn('parameters', result['signature'])
+        result = server.get_operation_signature("Completion")
+        self.assertIsInstance(result, str)
+        self.assertIn("# Signature: Completion", result)
+        self.assertIn("Completion ( _completionRecord_: a Completion Record ): a Completion Record", result)
 
     def test_get_operation_algorithm(self):
         result = server.get_operation_algorithm("ToObject")
         self.assertIsInstance(result, str)
+        self.assertIn("# ToObject", result)
         self.assertTrue("TypeError" in result)
 
     def test_get_operation_algorithm_host_defined(self):
@@ -90,6 +70,9 @@ class TestEcma262Server(unittest.TestCase):
         self.assertIsInstance(result, str)
         self.assertTrue("HostEnsureCanAddPrivateElement" in result)
         self.assertTrue("host-defined exotic object" in result)
+        self.assertIn(r"\~unused\~", result)
+        # Verify rendered as markdown list
+        self.assertIn("- If _obj_ is not a host-defined exotic object", result)
 
     def test_get_operation_callers(self):
         result = server.get_operation_callers("PrivateFieldAdd")
@@ -98,14 +81,35 @@ class TestEcma262Server(unittest.TestCase):
         self.assertIn("Perform ? PrivateFieldAdd", result)
 
     def test_section_hash_handling(self):
-        # Section with leading hash
         res1 = server.get_section_content("#sec-completion-ao")
-        self.assertIn("sec-completion-ao", res1)
+        self.assertIn("Completion", res1)
 
-        # Signature lookup
         res2 = server.get_operation_signature("ToObject")
-        self.assertIn("signature", res2)
-        self.assertIn("parameters", res2)
+        self.assertIn("ToObject ( _arg_:", res2)
+
+    def test_all_spec_html_tags_handled(self):
+        """Validates that every single HTML/Ecmarkup tag present in spec.html is explicitly handled."""
+        HANDLED_TAGS = {
+            'a', 'b', 'body', 'br', 'code', 'dd', 'dfn', 'div', 'dl', 'dt', 'em',
+            'emu-alg', 'emu-annex', 'emu-clause', 'emu-concrete-method-dfns', 'emu-eqn',
+            'emu-figure', 'emu-grammar', 'emu-import', 'emu-intro', 'emu-meta', 'emu-not-ref',
+            'emu-note', 'emu-prodref', 'emu-table', 'emu-val', 'emu-xref', 'figure',
+            'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'head', 'html', 'i', 'img', 'ins', 'del',
+            'li', 'link', 'meta', 'ol', 'p', 'pre', 'span', 'strong', 'style', 'sub',
+            'sup', 'table', 'tbody', 'td', 'th', 'thead', 'tr', 'ul', 'var'
+        }
+        
+        spec_path = server.SPEC_PATH
+        self.assertTrue(os.path.exists(spec_path), f"spec.html not found at {spec_path}")
+        
+        import re
+        with open(spec_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+            
+        tags_in_doc = set(m.lower() for m in re.findall(r'<([a-zA-Z][a-zA-Z0-9-]*)[>\s/]', content))
+        
+        unhandled = tags_in_doc - HANDLED_TAGS
+        self.assertEqual(len(unhandled), 0, f"Found unhandled tags in spec.html: {unhandled}")
 
 
 if __name__ == '__main__':

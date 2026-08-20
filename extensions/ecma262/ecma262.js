@@ -170,6 +170,179 @@ function searchSpec(biblio, query, type) {
   return results;
 }
 
+function renderTable(table) {
+  const rows = Array.from(table.querySelectorAll('tr'));
+  if (rows.length === 0) return '';
+  const parsedRows = rows.map(tr => {
+    return Array.from(tr.querySelectorAll('th, td')).map(cell => {
+      return renderNode(cell).trim().replace(/\n+/g, ' ');
+    });
+  });
+  
+  const numCols = Math.max(...parsedRows.map(r => r.length));
+  if (numCols === 0) return '';
+  
+  const lines = [];
+  parsedRows.forEach((row, i) => {
+    while (row.length < numCols) row.push('');
+    lines.push('| ' + row.join(' | ') + ' |');
+    if (i === 0) {
+      lines.push('| ' + Array(numCols).fill('---').join(' | ') + ' |');
+    }
+  });
+  return '\n' + lines.join('\n') + '\n\n';
+}
+
+function formatAlgorithmSteps(alg) {
+  const processed = processAlgorithm(alg);
+  if (!processed) {
+    return alg.textContent.trim().replace(/~([a-zA-Z0-9_-]+)~/g, (m, g1) => '\\~' + g1 + '\\~') + '\n\n';
+  }
+  const lines = processed.map(step => {
+    const indent = '  '.repeat(step.indent ? Math.floor(step.indent / 2) : 0);
+    const content = step.content.replace(/~([a-zA-Z0-9_-]+)~/g, (m, g1) => '\\~' + g1 + '\\~');
+    return `${indent}${step.position}. ${content}`;
+  });
+  return '\n' + lines.join('\n') + '\n\n';
+}
+
+function renderNode(node) {
+  if (node.nodeType === 3) {
+    return node.textContent.replace(/\s+/g, ' ').replace(/~([a-zA-Z0-9_-]+)~/g, (m, g1) => '\\~' + g1 + '\\~');
+  }
+  if (node.nodeType !== 1) return '';
+
+  const tag = node.tagName.toLowerCase();
+  switch (tag) {
+    case 'h1':
+      return '# ' + renderChildren(node).trim() + '\n\n';
+    case 'h2':
+      return '## ' + renderChildren(node).trim() + '\n\n';
+    case 'h3':
+      return '### ' + renderChildren(node).trim() + '\n\n';
+    case 'h4':
+    case 'h5':
+    case 'h6':
+      return '#### ' + renderChildren(node).trim() + '\n\n';
+    case 'p':
+      return renderChildren(node).trim() + '\n\n';
+    case 'var':
+      return '_' + renderChildren(node).trim() + '_';
+    case 'emu-val': {
+      let val = renderChildren(node).trim();
+      if (val.startsWith('~') && val.endsWith('~')) {
+        return '\\' + val.slice(0, -1) + '\\~';
+      }
+      if (val.startsWith('\\~') && val.endsWith('\\~')) return val;
+      return '*' + val + '*';
+    }
+    case 'code':
+      return '`' + renderChildren(node).trim() + '`';
+    case 'b':
+    case 'strong':
+      return '**' + renderChildren(node).trim() + '**';
+    case 'i':
+    case 'em':
+    case 'dfn':
+      return '*' + renderChildren(node).trim() + '*';
+    case 'ins':
+      return '<ins>' + renderChildren(node).trim() + '</ins>';
+    case 'del':
+      return '<del>' + renderChildren(node).trim() + '</del>';
+    case 'sub':
+      return '_{' + renderChildren(node).trim() + '}';
+    case 'sup':
+      return '^{' + renderChildren(node).trim() + '}';
+    case 'br':
+      return '\n';
+    case 'a':
+    case 'emu-xref': {
+      const href = node.getAttribute('href');
+      const text = renderChildren(node).trim();
+      return href ? `[${text}](${href})` : text;
+    }
+    case 'emu-note':
+      return '\n> **NOTE:** ' + renderChildren(node).trim().replace(/\n/g, '\n> ') + '\n\n';
+    case 'emu-grammar':
+      return '\n```grammar\n' + node.textContent.trim() + '\n```\n\n';
+    case 'emu-eqn':
+      return '\n$$\n' + node.textContent.trim() + '\n$$\n\n';
+    case 'pre':
+      return '\n```\n' + node.textContent.trim() + '\n```\n\n';
+    case 'ul':
+      return Array.from(node.children).filter(c => c.tagName.toLowerCase() === 'li')
+        .map(li => '- ' + renderChildren(li).trim().replace(/\n/g, '\n  '))
+        .join('\n') + '\n\n';
+    case 'ol':
+      return Array.from(node.children).filter(c => c.tagName.toLowerCase() === 'li')
+        .map((li, idx) => `${idx + 1}. ` + renderChildren(li).trim().replace(/\n/g, '\n   '))
+        .join('\n') + '\n\n';
+    case 'dl':
+      return Array.from(node.children).map(c => {
+        if (c.tagName.toLowerCase() === 'dt') return '**' + renderChildren(c).trim() + ':** ';
+        if (c.tagName.toLowerCase() === 'dd') return renderChildren(c).trim() + '\n';
+        return renderNode(c);
+      }).join('') + '\n';
+    case 'table':
+    case 'emu-table':
+      return renderTable(node);
+    case 'emu-alg':
+      return formatAlgorithmSteps(node);
+    case 'style':
+    case 'meta':
+    case 'link':
+    case 'head':
+      return '';
+    default:
+      return renderChildren(node);
+  }
+}
+
+function renderChildren(node) {
+  return Array.from(node.childNodes).map(renderNode).join('');
+}
+
+function formatType(t) {
+  if (!t) return 'any';
+  if (typeof t === 'string') return t;
+  if (t.kind === 'completion') {
+    if (t.typeOfValueIfNormal) {
+      const inner = formatType(t.typeOfValueIfNormal);
+      return `either a normal completion containing ${inner} or a throw completion`;
+    }
+    return 'a Completion Record';
+  }
+  if (t.kind === 'opaque') return t.type || 'opaque';
+  if (t.kind === 'union' && Array.isArray(t.types)) {
+    return t.types.map(formatType).join(' | ');
+  }
+  if (t.kind === 'list' && t.elements) {
+    return `a List of ${formatType(t.elements)}`;
+  }
+  if (t.type) return formatType(t.type);
+  return 'any';
+}
+
+function formatSignature(name, sig) {
+  if (!sig) return name;
+  const params = [];
+  if (sig.parameters) {
+    sig.parameters.forEach(p => {
+      params.push(`${p.name}: ${formatType(p.type)}`);
+    });
+  }
+  if (sig.optionalParameters) {
+    sig.optionalParameters.forEach(p => {
+      params.push(`[${p.name}: ${formatType(p.type)}]`);
+    });
+  }
+  let ret = '';
+  if (sig.return) {
+    ret = `: ${formatType(sig.return)}`;
+  }
+  return `${name} ( ${params.join(', ')} )${ret}`;
+}
+
 function getSectionContent(id) {
   if (id && id.startsWith('#')) id = id.slice(1);
   const html = fs.readFileSync(SPEC_PATH, 'utf-8');
@@ -181,7 +354,8 @@ function getSectionContent(id) {
     return {error: `Section with id ${id} not found`};
   }
 
-  return {content: element.outerHTML};
+  const markdown = renderNode(element).trim();
+  return {content: markdown};
 }
 
 function getSectionsContent(ids) {
@@ -196,7 +370,7 @@ function getSectionsContent(ids) {
     if (!element) {
       results[id] = {error: `Section with id ${id} not found`};
     } else {
-      results[id] = {content: element.outerHTML};
+      results[id] = {content: renderNode(element).trim()};
     }
   }
   return results;
@@ -232,7 +406,8 @@ function getOperationSignature(biblio, name) {
   const entries = biblio.entries;
   for (const entry of entries) {
     if (entry.type === 'op' && (entry.aoid === name || (entry.aoid && name && entry.aoid.toLowerCase() === name.toLowerCase()))) {
-      return {signature: entry.signature};
+      const formatted = formatSignature(entry.aoid || name, entry.signature);
+      return {signature: entry.signature, formatted: formatted};
     }
   }
   return {error: `Operation ${name} not found`};
